@@ -1,4 +1,23 @@
 tparkeen: 
+- copied hw1 files over -> skeleton code.
+-
+-
+
+
 annieshenca:
+-
+-
+-
+
+
 dzheng7:
+-
+-
+-
+
+
 csmaher:
+-
+-
+-
+
