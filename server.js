@@ -1,15 +1,28 @@
-'use strict';
+
+'use strict'
 
 const express = require('express');
 
-// Constants
+
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
-// App
 const app = express();
-app.get('/', (req, res) => {
-  res.send('Hello world\n');
+
+app.get('/hello', (req, res) => {
+  res.send('Hello world!');
+});
+
+app.post('/hello', (req, res) => {
+  res.send(405);
+});
+
+app.get('/test', (req, res) => {
+  res.send('GET request received');
+});
+
+app.post('/test', (req, res) => {
+  res.send('POST message received: ' + req.query.msg);
 });
 
 app.listen(PORT, HOST);
