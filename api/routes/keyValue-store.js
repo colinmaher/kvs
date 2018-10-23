@@ -86,8 +86,6 @@ router.get('/getValue', (req, res, next) => {
 })
 
 
-
-
 //
 //Check if user input key & val are valid to be processed.
 function keyCheck(key) {
