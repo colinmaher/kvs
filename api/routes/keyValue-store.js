@@ -21,7 +21,7 @@ router.get('/', (req, res, next) => {
 	//Error message working
 	res.status(404).json({
 		'result': 'Error',
-		'msg': 'Not Found'
+		'msg': 'Not found'
 	});
 })
 
