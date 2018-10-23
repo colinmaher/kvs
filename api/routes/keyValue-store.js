@@ -9,7 +9,7 @@ router.put('/', (req, res, next) => {
 	//Error message working
 	console.log("key: " + key + " value: " + value);
 	//convert to string
-	
+
 	if (key in hash) {
 		res.status(201).json({
 			'replaced': 'True',
@@ -43,6 +43,18 @@ router.delete('/', (req, res, next) => {
 	});
 })
 
+
+router.get('/isKeyExists', (req, res, next) => {
+	res.status(200).json({
+		'result': 'hello i\'m search ONE is this working???'
+	});
+})
+
+router.get('/getValue', (req, res, next) => {
+	res.status(200).json({
+		'result': 'hi i\'m search TWO is this working???'
+	});
+})
 
 
 
