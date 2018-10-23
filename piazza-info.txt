@@ -1,0 +1,40 @@
+search: 
+	search 1 url: GET http://server:8080/keyValue-store/isKeyExists?item=<key>
+	search 2 url: GET http://server:8080/keyValue-store/getValue?item=<key> 
+	codes 200, 404 for success/failure
+	search part 1 results:
+		if it exists
+		{
+			'result': 'True',
+			'msg': 'Key Found'
+		}
+		if it doesn't
+		{
+			'result': 'False',
+			'msg': 'Key not found'
+		}
+	search part 2 result:
+		if it exists
+		{
+			'result': 'success',
+			'value': 'some value'
+		}
+		if it doesn't
+		{
+			'result': 'Error',
+			'value': 'Not Found'
+		}
+put:
+	replicating put requests in postman: 
+		url: localhost:(PORT)/keyValue-store/<key> 
+		body: JSON {"val": "Distributed System"}
+		
+	browser url: localhost:49160/keyValue-store/subject -d "val=Distributed System" 
+	read put's value from message body
+error codes:
+	422: for key too long, value too large
+	400: if key/value violate restrictions
+subnet:
+	required for part 2
+	--ip flag recommended
+creating docker network: sudo docker network create --subnet=10.0.0.0/16 mynet
