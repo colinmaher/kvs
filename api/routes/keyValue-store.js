@@ -2,10 +2,13 @@ const express = require('express');
 const router = express.Router();
 
 router.put('/', (req, res, next) => {
+	var query = req.query;
 	//Error message working
 	res.status(201).json({
 		'replaced': 'False',
-		'msg':'Added successfully'
+		'msg':'Added successfully',
+		'key':Object.keys(query),
+		'val':Object.values(query)
 	});
 })
 
