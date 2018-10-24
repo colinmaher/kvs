@@ -1,23 +1,22 @@
 tparkeen: 
 - copied hw1 files over -> skeleton code.
--
+- getting key and val for PUT
 -
 
 
 annieshenca:
-- 
--
+- SEARCH
+- Key and value checks
 -
 
 
 dzheng7:
--
--
+- Gathering information from Piazza
+- 
 -
 
 
 csmaher:
+- PUT, GET, DELETE, SEARCH
+- Program testing
 -
--
--
-
