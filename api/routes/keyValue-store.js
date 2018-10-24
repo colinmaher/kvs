@@ -131,6 +131,17 @@ router.get('/getValue', (req, res, next) => {
 
 
 //
+// ***In progress
+//Cleaning up the error checking.
+/*
+function checks(key, val) {
+	const k = keyCheck(key);
+	const v = valCheck(val);
+
+}
+*/
+
+//
 //Check if user input key & val are valid to be processed.
 function keyCheck(key) {
 	//If key is not alphanumeric OR empty
