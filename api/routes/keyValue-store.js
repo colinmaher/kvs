@@ -2,12 +2,25 @@ const express = require('express');
 const router = express.Router();
 const hash = {};
 
+router.use(function(req, res, next){
+	console.log('Request URL:', req.originalUrl);
+	if(process.env.MAINIP !== undefined) {
+		res.redirect(process.env.MAINIP + req.originalUrl);
+	}
+	else {
+		next();
+	}
+	// next();
+});
+
 router.put('/', (req, res, next) => {
 	const query = req.query;
 	const key = Object.keys(query).toString();
 	const value = Object.values(query).toString();
 	//Error message working
 	console.log("key: " + key + " value: " + value);
+	console.log("process mainip: " + process.env.MAINIP);
+
 	//convert to string
 
 	if (!keyCheck(key)) {
