@@ -1,6 +1,6 @@
 search: 
-	search 1 url: GET http://server:8080/keyValue-store/isKeyExists?item=<key>
-	search 2 url: GET http://server:8080/keyValue-store/getValue?item=<key> 
+	search 1 url: GET http://server:8080/keyValue-store/search/subject (Does it exist)
+	search 2 url: GET http://server:8080/keyValue-store/subject (If it does, what is it)
 	codes 200, 404 for success/failure
 	search part 1 results:
 		if it exists
