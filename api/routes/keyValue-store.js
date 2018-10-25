@@ -73,62 +73,22 @@ router.delete('/', (req, res, next) => {
 })
 
 
-router.get('/isKeyExists', (req, res, next) => {
-	const key = req.query.key;
-
-	if (!keyCheck(key)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Key not valid'
-		});
-	} else if (valCheck(value)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Object too large. Size limit is 1MB'
-		});
-	}
+router.get('/search', (req, res, next) => {
+	const query = req.query;
+	const key = Object.keys(query).toString();
 
 	if (key in hash){
 		res.status(200).json({
-			'result': 'True',
-			'msg': 'Key found'
+			'result': 'Success',
+			'isExists': 'Key found'
 		});
 	} else {
 		res.status(404).json({
-			'result': 'False',
-			'msg': 'Key not found'
+			'result': 'Failure',
+			'isExists': 'Key not found'
 		});
 	}
 })
-
-router.get('/getValue', (req, res, next) => {
-	const key = req.query.key;
-
-	if (!keyCheck(key)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Key not valid'
-		});
-	} else if (valCheck(value)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Object too large. Size limit is 1MB'
-		});
-	}
-
-	if (key in hash){
-		res.status(200).json({
-			'result': 'success',
-			'value': hash[key]
-		});
-	} else {
-		res.status(404).json({
-			'result': 'Error',
-			'value': 'Not found'
-		});
-	}
-})
-
 
 //
 // ***In progress
