@@ -105,7 +105,10 @@ function checks(key, val) {
 //Check if user input key & val are valid to be processed.
 function keyCheck(key) {
 	//If key is not alphanumeric OR empty
-	if (!key.match(/^[a-zA-Z0-9]+$/i) || key.trim() === '') {
+	if (key.length > 0 && key.length < 201) {
+        if (!key.match(/^[a-zA-Z0-9]+$/i) || key.trim() === '') {
+		return false;
+	} else {
 		return false;
 	}
 	//Otherwise, everything is fine and return true
