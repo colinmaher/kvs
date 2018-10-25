@@ -77,7 +77,7 @@ router.get('/search', (req, res, next) => {
 	const query = req.query;
 	const key = Object.keys(query).toString();
 
-	if (key in hash){
+	if (key in hash) {
 		res.status(200).json({
 			'result': 'Success',
 			'isExists': 'Key found'
@@ -105,10 +105,10 @@ function checks(key, val) {
 //Check if user input key & val are valid to be processed.
 function keyCheck(key) {
 	//If key is not alphanumeric OR empty
-	if (key.length > 0 && key.length < 201) {
-        if (!key.match(/^[a-zA-Z0-9]+$/i) || key.trim() === '') {
+	if (key.length > 200) {
 		return false;
-	} else {
+	}
+	if (!key.match(/^[a-zA-Z0-9]+$/i) || key.trim() === '') {
 		return false;
 	}
 	//Otherwise, everything is fine and return true
