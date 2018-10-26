@@ -1,7 +1,17 @@
+/*
+ * CMPS 128 Fall 2018
+ * Homework 2 - Single Key Value Store with Proxy Forwarding
+ * Team mates: Annie Shen, Art Parkeenvincha, Colin Maher, Daniel Zheng
+ */
 const express = require('express');
 const router = express.Router();
 const hash = {};
 
+
+//
+// Check for is this Docker container is the Master node or Proxy node by
+// seeing if MAINIP==undefined. Proceed if I'm Master, forward to Master if
+// I'm one of the Proxy.
 router.use(function(req, res, next){
 	console.log('Request URL:', req.originalUrl);
 	if(process.env.MAINIP !== undefined) {
@@ -13,6 +23,10 @@ router.use(function(req, res, next){
 	// next();
 });
 
+//
+// The PUT request
+// Store the given key into our hash table. Insert both when the key is new
+// and when the key was know and replace the value.
 router.put('/', (req, res, next) => {
 	const query = req.query;
 	const key = Object.keys(query).toString();
@@ -49,6 +63,11 @@ router.put('/', (req, res, next) => {
 	console.log("hash: " + hash);
 })
 
+
+//
+// The GET request
+// Return the value of the key being asked for by the user.
+// Return error message if key does not exist in hash table.
 router.get('/', (req, res, next) => {
 	//Error message working
 	const query = req.query;
@@ -68,6 +87,10 @@ router.get('/', (req, res, next) => {
 })
 
 
+//
+// The DELETE request
+// Deletes the given key and the corresponding key from hash table.
+// Return error message if the key doesn't exist in the hash table.
 router.delete('/', (req, res, next) => {
 	const query = req.query;
 	const key = Object.keys(query).toString();
@@ -86,6 +109,10 @@ router.delete('/', (req, res, next) => {
 })
 
 
+//
+// The SEARCH (type 2), aka GET request
+// Return the value that's corresponding to the key given.
+// Return error message if the key doesn't exist in the hash table.
 router.get('/search', (req, res, next) => {
 	const query = req.query;
 	const key = Object.keys(query).toString();
@@ -103,8 +130,9 @@ router.get('/search', (req, res, next) => {
 	}
 })
 
+
 //
-// ***In progress
+// ***In progress. Come back if have time before due.
 //Cleaning up the error checking.
 /*
 function checks(key, val) {
@@ -114,8 +142,10 @@ function checks(key, val) {
 }
 */
 
+
 //
-//Check if user input key & val are valid to be processed.
+// Functions to check valididations of user's key and value.
+// Return error message if not within regulations.
 function keyCheck(key) {
 	//If key is not alphanumeric OR empty
 	if (key.length > 200) {
@@ -135,7 +165,6 @@ function valCheck(val) {
 		return false;
 	}
 }
-
 // https://gist.github.com/lovasoa/11357947
 function byteLength(str) {
 	// returns the byte length of an utf8 string
@@ -148,5 +177,7 @@ function byteLength(str) {
 	}
 	return s;
 }
+
+
 
 module.exports = router;
