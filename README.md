@@ -15,8 +15,8 @@ docker build -t app .
 docker network create --subnet=10.0.0.0/16 mynet
 
 // Build the main (master) container.
-docker run -p 8083:8080 --net=mynet --ip=10.0.0.20 -d app
+docker run -p 8083:8080 --net=mynet --ip=10.0.0.20 app
 
 // Build the proxy containers and specify the port they should follow.
-docker run -p 8084:8080 --net=mynet -e MAINIP=10.0.0.20:8080 -d app
-docker run -p 8085:8080 --net=mynet -e MAINIP=10.0.0.20:8080 -d app
+docker run -p 8084:8080 --net=mynet -e MAINIP=10.0.0.20:8080 app
+docker run -p 8085:8080 --net=mynet -e MAINIP=10.0.0.20:8080 app

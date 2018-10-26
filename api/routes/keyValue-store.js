@@ -15,13 +15,26 @@ const hash = {};
 router.use(function(req, res, next){
 	console.log('Request URL:', req.originalUrl);
 	if(process.env.MAINIP !== undefined) {
-		res.redirect(process.env.MAINIP + req.originalUrl);
+		console.log('about to redirect------');
+
+		try {
+			console.log('http://localhost:8083'+ req.originalUrl);
+		} catch (err) {
+			console.log('in catch. error happened.');
+			console.log(err);
+			next();
+		}
+
+		console.log('-----------------------');
+		res.redirect('http://localhost:8083' + req.originalUrl);
 	}
 	else {
+		console.log('NOT redirecting. I am the Master!');
 		next();
 	}
 	// next();
 });
+
 
 //
 // The PUT request
