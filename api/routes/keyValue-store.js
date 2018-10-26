@@ -29,7 +29,6 @@ router.use(function(req, res, next){
 	else {
 		//console.log('NOT redirecting. I am the Master!');
         switch (req.method) {
-
             case 'PUT':
                 put(res, req);
                 break;
@@ -39,7 +38,7 @@ router.use(function(req, res, next){
                 // if (url.includes('/search/') == true) {
                 //     search(res, req);
                 // } else { // the menthod is callling a normal GET
-                    get(res, req);
+                get(res, req);
                 //}
                 break;
             case 'DELETE':
@@ -64,17 +63,16 @@ function put (res, req) {
     // The variable key is mantained by trimming the originalUrl. It contains
     // all characts after the /keyValue-store/.
     var key = req.originalUrl.slice(16);
+
+    //*****TEMP*****
+    //just so the code can run... Can NOT figure out how to get the val from body......
     var value = 10;
-    // res.status(200).json({
-    //     'result': 'testing. in put rn',
-    //     'key': key
-    // });
 
     console.log('------------------');
 	console.log("key: " + key + " value: " + value);
 	console.log("process mainip: " + process.env.MAINIP);
     console.log('------------------');
-	// convert to string
+
 
 	if (!keyCheck(key)) {
 		res.status(404).json({
@@ -89,7 +87,7 @@ function put (res, req) {
 	} else if (key in hash) {
 		hash[key] = value;
 		res.status(201).json({
-			'replaced': 'True',
+			'replaced': true,
 			'msg': 'Added successfully',
 		});
 	} else {
@@ -144,9 +142,8 @@ router.put('/', (req, res, next) => {
 // Return the value of the key being asked for by the user.
 // Return error message if key does not exist in hash table.
 function get(res, req) {
-    //Error message working
-    const query = req.query;
-    const key = Object.keys(query).toString();
+    //const query = req.query;
+    const key = req.originalUrl.slice(16);
 
     if (key in hash) {
         res.status(200).json({
@@ -226,20 +223,19 @@ router.delete('/', (req, res, next) => {
 // Return the value that's corresponding to the key given.
 // Return error message if the key doesn't exist in the hash table.
 function search (res, req) {
-    const query = req.query;
-	const key = Object.keys(query).toString();
-    //
-	// if (key in hash) {
-	// 	res.status(200).json({
-	// 		'result': 'Success',
-	// 		'isExists': 'Key found'
-	// 	});
-	// } else {
-	// 	res.status(404).json({
-	// 		'result': 'Failure',
-	// 		'isExists': 'Key not found'
-	// 	});
-	// }
+	const key = req.originalUrl.slice(16);
+
+	if (key in hash) {
+		res.status(200).json({
+			'result': 'Success',
+			'isExists': 'Key found'
+		});
+	} else {
+		res.status(404).json({
+			'result': 'Failure',
+			'isExists': 'Key not found'
+		});
+	}
 }
 /*
 router.get('/search', (req, res, next) => {
