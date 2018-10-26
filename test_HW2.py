@@ -1,5 +1,3 @@
-# test file for homework 2
-
 import unittest
 import subprocess
 import requests
@@ -8,7 +6,7 @@ import random
 import time
 
 hostname = 'localhost'  # Windows and Mac users can change this to the docker vm ip
-contname = 'assignment2'  # Set your container name here
+contname = 'app'  # Set your container name here
 sudo = ''  # Make the value of this variable sudo if you need sudo to start containers
 
 
@@ -72,7 +70,7 @@ class TestHW2(unittest.TestCase):
 
 
     def test_c_put_existing_key(self):
-        res = requests.put(self.__class__.nodes_address[1] + '/keyValue-store/subject', data = {'val': 'Data Structures'})
+        res = requests.put(self.__class__.nodes_address[1] + '/keyValue-store/subject',  data = {'val': 'Data Structures'})
         d = res.json()
         self.assertEqual(d['replaced'], 1)
         self.assertEqual(d['msg'], 'Updated successfully')
@@ -151,7 +149,7 @@ class TestHW2(unittest.TestCase):
         res = requests.put(self.__class__.nodes_address[0] + '/keyValue-store/subject', data={'val': self.__class__.val2})
         d = res.json()
         self.assertEqual(d['replaced'], 1)
-        self.assertEqual(d['msg'], 'Success')
+        self.assertEqual(d['msg'], 'Updated successfully')
 
 
     def test_n_get_nonexistent_key(self):
@@ -165,10 +163,10 @@ class TestHW2(unittest.TestCase):
         res = requests.get(self.__class__.nodes_address[2] + '/keyValue-store/' + self.__class__.key1)
         d = res.json()
         self.assertEqual(d['msg'], 'Success')
-        self.assertEqual(d['value'], self.__class__.val2)
+        self.assertEqual(d['value'], self.__class__.val1)
 
     def test_p_put_key_too_long(self):
-        res = requests.put(self.__class__.nodes_address[0] + '/keyValue-store/' + self.__class__.key3, data={'val':self.__class__.val2})
+        res = requests.put(self.__class__.nodes_address[0] + '/keyValue-store/'+self.__class__.key3, data={'val':self.__class__.val2})
 
         d = res.json()
         self.assertNotEqual(res.status_code, 200)

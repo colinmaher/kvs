@@ -13,11 +13,6 @@ const app = express();
 const keyRoutes = require('./api/routes/keyValue-store');
 app.use('/keyValue-store', keyRoutes);
 
-// const searchOneRoute = require('./api/routes/isKeyExists');
-// app.use('/isKeyExists', searchOneRoute);
-//
-// const searchTwoRoute = require('./api/routes/getValue');
-// app.use('/getValue', searchTwoRoute);
 
 
 app.listen(PORT, HOST);
