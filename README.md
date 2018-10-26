@@ -1,13 +1,20 @@
+Git commands:
+git checkout -b (new branch name w/o brackets)
+git checkout (branch name you want to go to)
+git branch //check which branch you're currently on
+
+------------------------------------------------------------------------------
 Docker commands:
-
-docker build -t app .
-docker run -p 8080:8080 app
-
 docker system prune //delete all non-active things
 docker kill $(docker ps -a) //kill all running containers
 
 ------------------------------------------------------------------------------
+For HW2 part 1:
 
+docker build -t app .
+docker run -p 8080:8080 app
+
+------------------------------------------------------------------------------
 For HW2 part 2 specifically:
 
 docker build -t app .
@@ -23,16 +30,13 @@ docker run -p 8084:8080 --net=mynet -e MAINIP=10.0.0.20:8080 app
 docker run -p 8085:8080 --net=mynet -e MAINIP=10.0.0.20:8080 app
 
 ------------------------------------------------------------------------------
-
 Example cURL terminal commands to test HTTP connections and requests:
 
 curl -X GET http://localhost:8080/keyValue-store/one -w “%{http_code}”
 curl -X PUT -H "Content-Type: application/json" -d '{"val":"111111"}' http://localhost:8080/keyValue-store/oneoneone
 
-
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
-
 Annie's Log - Oct 26 @ 2:30AM
 
 After coming home I asked my friend to check out what we had.
