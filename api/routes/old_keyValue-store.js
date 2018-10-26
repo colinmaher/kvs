@@ -53,6 +53,8 @@ router.put('/', (req, res, next) => {
 	console.log("key: " + key + " value: " + value);
 	console.log("process mainip: " + process.env.MAINIP);
 
+
+	console.log(req);
 	//convert to string
 
 	if (!keyCheck(key)) {
