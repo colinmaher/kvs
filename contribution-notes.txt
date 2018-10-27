@@ -12,7 +12,7 @@ annieshenca:
 
 dzheng7:
 - Gathering information from Piazza
--
+- Testing, checking if the program matches the specs.
 -
 
 
