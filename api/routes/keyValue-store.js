@@ -70,24 +70,29 @@ function put (req, res) {
 
 	if (!keyCheck(key)) {
 		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Key not valid'
+			'msg': 'Key not valid',
+			'result': 'Error'
 		});
 	} else if (valCheck(value)) {
 		res.status(404).json({
 			'result': 'Error',
 			'msg': 'Object too large. Size limit is 1MB'
 		});
-	} else if (key in hash) {
+    } else if (value == undefined) {
+        res.status(404).json({
+			'msg': 'Error',
+			'error': 'Value is missing'
+		});
+    } else if (key in hash) {
 		hash[key] = value;
-		res.status(201).json({
-			'replaced': true,
-			'msg': 'Added successfully',
+		res.status(200).json({
+			'replaced': 'True',
+			'msg': 'Updated successfully',
 		});
 	} else {
 		hash[key] = value;
 		res.status(201).json({
-			'replaced': false,
+			'replaced': 'False',
 			'msg': 'Added successfully',
 		});
 	}
@@ -110,8 +115,8 @@ function get(req, res) {
         });
     } else {
         res.status(404).json({
-            'result': 'Error',
-            'msg': 'Not Found'
+            'msg': 'Error',
+            'error': 'Key does not exist'
         });
     }
 }
@@ -148,13 +153,13 @@ function search (req, res) {
 
 	if (key in hash) {
 		res.status(200).json({
-			'result': 'Success',
-			'isExists': 'Key found'
+            'isExist': 'true',
+            'result': 'Success'
 		});
 	} else {
 		res.status(404).json({
-			'result': 'Failure',
-			'isExists': 'Key not found'
+			'isExist': 'false',
+			'result': 'Error'
 		});
 	}
 }
