@@ -13,7 +13,7 @@ const hash = {};
 // seeing if MAINIP==undefined. Proceed if I'm Master, forward to Master if
 // I'm one of the Proxy.
 router.use(function(req, res, next){
-    //const url = req.originalUrl;
+    const url = req.originalUrl;
 	console.log('Request URL:', req.originalUrl);
 
 	if(process.env.MAINIP !== undefined) {
@@ -27,27 +27,26 @@ router.use(function(req, res, next){
 		}
 	}
 	else {
-		//console.log('NOT redirecting. I am the Master!');
+		console.log('NOT redirecting. I am the Master!');
         switch (req.method) {
             case 'PUT':
-                put(res, req);
+                put(req, res);
                 break;
             case 'GET':
                 // Need to check if it's mentioning /search
                 // & No cheating! In case where the key == "search"
-                // if (url.includes('/search/') == true) {
-                //     search(res, req);
-                // } else { // the menthod is callling a normal GET
-                get(res, req);
-                //}
+                if (url.includes('search/') == true) {
+                    search(req, res);
+                } else { // the menthod is callling a normal GET
+                    get(req, res);
+                }
                 break;
             case 'DELETE':
-                del(res, req);
+                del(req, res);
                 break;
         }
         next();
 	}
-	// next();
 });
 
 
@@ -55,63 +54,19 @@ router.use(function(req, res, next){
 // The PUT request
 // Store the given key into our hash table. Insert both when the key is new
 // and when the key was know and replace the value.
-function put (res, req) {
+function put (req, res) {
     const query = req.query;
 
     // The variable key is mantained by trimming the originalUrl. It contains
     // all characts after the /keyValue-store/.
     var key = req.originalUrl.slice(16);
+    var value = req.body.val;
 
-    console.log('---------------------------------------------------');
-    console.log('---------------------------------------------------');
-    console.log('Here is the key: ' + key);
-    console.log('Below includes req.body: ');
-    console.log(req.body);
-
-
-
-    // console.log('------------------');
-	// console.log("key: " + key + " value: " + value);
-	// console.log("process mainip: " + process.env.MAINIP);
-    // console.log('------------------');
-    //
-    //
-	// if (!keyCheck(key)) {
-	// 	res.status(404).json({
-	// 		'result': 'Error',
-	// 		'msg': 'Key not valid'
-	// 	});
-	// } else if (valCheck(value)) {
-	// 	res.status(404).json({
-	// 		'result': 'Error',
-	// 		'msg': 'Object too large. Size limit is 1MB'
-	// 	});
-	// } else if (key in hash) {
-	// 	hash[key] = value;
-	// 	res.status(201).json({
-	// 		'replaced': true,
-	// 		'msg': 'Added successfully',
-	// 	});
-	// } else {
-	// 	hash[key] = value;
-	// 	res.status(201).json({
-	// 		'replaced': false,
-	// 		'msg': 'Added successfully',
-	// 	});
-	// }
-
-	//console.log("hash: " + hash);
-}
-/*
-router.put('/', (req, res, next) => {
-	const query = req.query;
-	const key = Object.keys(query).toString();
-	const value = Object.values(query).toString();
-	//Error message working
+    console.log('------------------');
 	console.log("key: " + key + " value: " + value);
 	console.log("process mainip: " + process.env.MAINIP);
+    console.log('------------------');
 
-	//convert to string
 
 	if (!keyCheck(key)) {
 		res.status(404).json({
@@ -126,7 +81,7 @@ router.put('/', (req, res, next) => {
 	} else if (key in hash) {
 		hash[key] = value;
 		res.status(201).json({
-			'replaced': 'True',
+			'replaced': true,
 			'msg': 'Added successfully',
 		});
 	} else {
@@ -137,14 +92,14 @@ router.put('/', (req, res, next) => {
 		});
 	}
 	console.log("hash: " + hash);
-})*/
+}
 
 
 //
 // The GET request
 // Return the value of the key being asked for by the user.
 // Return error message if key does not exist in hash table.
-function get(res, req) {
+function get(req, res) {
     //const query = req.query;
     const key = req.originalUrl.slice(16);
 
@@ -160,52 +115,16 @@ function get(res, req) {
         });
     }
 }
-/*
-router.get('/', (req, res, next) => {
-	//Error message working
-    console.log("param"+req.param)
-    console.log("path"+req.path)
-	const query = req.query;
-	const key = Object.keys(query).toString();
 
-	if (key in hash) {
-		res.status(200).json({
-			'result': 'Success',
-			'value': hash[key]
-		});
-	} else {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Not Found'
-		});
-	}
-})*/
 
 
 //
 // The DELETE request
 // Deletes the given key and the corresponding key from hash table.
 // Return error message if the key doesn't exist in the hash table.
-function del (res, req) {
+function del (req, res) {
     const key = req.originalUrl.slice(16);
 
-	// if (key in hash) {
-	// 	delete hash[key];
-	// 	res.status(200).json({
-	// 		'result': 'Success',
-	// 	});
-	// } else {
-	// 	res.status(404).json({
-	// 		'result': 'Error',
-	// 		'msg': 'Status code 404'
-	// 	});
-	// }
-}
-/*
-router.delete('/', (req, res, next) => {
-	const query = req.query;
-	const key = Object.keys(query).toString();
-	//Error message working
 	if (key in hash) {
 		delete hash[key];
 		res.status(200).json({
@@ -217,15 +136,15 @@ router.delete('/', (req, res, next) => {
 			'msg': 'Status code 404'
 		});
 	}
-})*/
+}
 
 
 //
 // The SEARCH (type 2), aka GET request
 // Return the value that's corresponding to the key given.
 // Return error message if the key doesn't exist in the hash table.
-function search (res, req) {
-	const key = req.originalUrl.slice(16);
+function search (req, res) {
+    const key = req.originalUrl.slice(23);
 
 	if (key in hash) {
 		res.status(200).json({
@@ -239,23 +158,6 @@ function search (res, req) {
 		});
 	}
 }
-/*
-router.get('/search', (req, res, next) => {
-	const query = req.query;
-	const key = Object.keys(query).toString();
-
-	if (key in hash) {
-		res.status(200).json({
-			'result': 'Success',
-			'isExists': 'Key found'
-		});
-	} else {
-		res.status(404).json({
-			'result': 'Failure',
-			'isExists': 'Key not found'
-		});
-	}
-})*/
 
 
 //

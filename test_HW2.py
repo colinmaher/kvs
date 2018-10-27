@@ -62,19 +62,19 @@ class TestHW2(unittest.TestCase):
         self.assertEqual(d['msg'], 'Added successfully')
 
 
-    # def test_b_get_existing_key(self):
-    #     res = requests.get(self.__class__.nodes_address[2] + '/keyValue-store/subject')
-    #     d = res.json()
-    #     self.assertEqual(d['msg'], 'Success')
-    #     self.assertEqual(d['value'], 'Distributed System')
+    def test_b_get_existing_key(self):
+        res = requests.get(self.__class__.nodes_address[2] + '/keyValue-store/subject')
+        d = res.json()
+        self.assertEqual(d['msg'], 'Success')
+        self.assertEqual(d['value'], 'Distributed System')
+
     #
-    #
-    # def test_c_put_existing_key(self):
-    #     res = requests.put(self.__class__.nodes_address[1] + '/keyValue-store/subject',  data = {'val': 'Data Structures'})
-    #     d = res.json()
-    #     self.assertEqual(d['replaced'], 1)
-    #     self.assertEqual(d['msg'], 'Updated successfully')
-    #
+    def test_c_put_existing_key(self):
+        res = requests.put(self.__class__.nodes_address[1] + '/keyValue-store/subject',  data = {'val': 'Data Structures'})
+        d = res.json()
+        self.assertEqual(d['replaced'], 1)
+        self.assertEqual(d['msg'], 'Updated successfully')
+
     #
     # def test_d_get_nonexistent_key(self):
     #     res = requests.get(self.__class__.nodes_address[2] + '/keyValue-store/subject2')
