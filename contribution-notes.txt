@@ -1,7 +1,8 @@
 tparkeen:
-- copied hw1 files over -> skeleton code.
+- copied hw1 files over -> skeleton code
+- added routes to keyValue-store from server.js
 - getting key and val for PUT
-- 
+- helping gather information from Piazza and online sources
 
 
 annieshenca:
