@@ -1,22 +1,24 @@
 'use strict'
 
-const express = require('express');
-var bodyParser = require('body-parser');
+const express = require('express')
+var bodyParser = require('body-parser')
 const PORT = 8080;
-const HOST = '0.0.0.0';
+const HOST = '0.0.0.0'
 
-const app = express();
+const app = express()
 
-//app.use(bodyParser.json()); // for parsing application/json
-app.use(bodyParser.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(bodyParser.json()); // for parsing application/json
+// app.use(bodyParser.urlencoded({
+//   extended: true
+// })) // for parsing application/x-www-form-urlencoded
 
 //Forwards all routing protocols to keyValue-store.js
-const keyRoutes = require('./api/routes/keyValue-store');
-app.use('/keyValue-store', keyRoutes);
+const keyRoutes = require('./api/routes/keyValue-store')
+app.use('/keyValue-store', keyRoutes)
 
 
 
-app.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
+app.listen(PORT, HOST)
+console.log(`Running on http://${HOST}:${PORT}`)
 
-module.exports = app;
+module.exports = app
