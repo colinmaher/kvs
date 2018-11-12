@@ -22,6 +22,7 @@ function isProcessBehind(payload) {
 			return false
 		}
 	}
+	console.log("process is behind")
 	return true
 }
 
@@ -85,33 +86,37 @@ router.put('/view/', (req, res) => {
 	console.log("VIEW: " + system_view)
 	ip_array = system_view.split(',')
 	console.log("received: " + req.body.received)
-	if (ip_array.includes(req.body.ip_port)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': req.body.ip_port + " is already in view"
-		})
-	} else if (req.body.received) {
-		system_view = system_view.concat(",", req.body.ip_port)
-		ip_array.push(req.body.ip_port)
-		console.log("added " + req.body.ip_port + " to view")
-		process_vc[process_ip] += 1 
-		res.status(200).json({
-			'result': 'Success',
-			'msg': "Successfully added " + req.body.ip_port + " to view"
-		})
+	if (!isProcessBehind(payload)) {
+
 	} else {
-		console.log("default path")
-		system_view = system_view.concat(",", req.body.ip_port)
-		console.log(system_view)
-		console.log(system_view.split(','))
-		ip_array.push(req.body.ip_port)
-		console.log(ip_array)
-		broadcast(req, 'PUT')
-		process_vc[process_ip] += 1 
-		res.status(200).json({
-			'result': 'Success',
-			'msg': "Successfully added " + req.body.ip_port + " to view"
-		})
+		if (ip_array.includes(req.body.ip_port)) {
+			res.status(404).json({
+				'result': 'Error',
+				'msg': req.body.ip_port + " is already in view"
+			})
+		} else if (req.body.received) {
+			system_view = system_view.concat(",", req.body.ip_port)
+			ip_array.push(req.body.ip_port)
+			console.log("added " + req.body.ip_port + " to view")
+			process_vc[process_ip] += 1 
+			res.status(200).json({
+				'result': 'Success',
+				'msg': "Successfully added " + req.body.ip_port + " to view"
+			})
+		} else {
+			console.log("default path")
+			system_view = system_view.concat(",", req.body.ip_port)
+			console.log(system_view)
+			console.log(system_view.split(','))
+			ip_array.push(req.body.ip_port)
+			console.log(ip_array)
+			broadcast(req, 'PUT')
+			process_vc[process_ip] += 1 
+			res.status(200).json({
+				'result': 'Success',
+				'msg': "Successfully added " + req.body.ip_port + " to view"
+			})
+		}
 	}
 })
 
@@ -123,19 +128,23 @@ function remove_ip(ip){
 
 router.delete('/view/', (req, res) => {
 	console.log(ip_array)
-	if (ip_array.includes(req.body.ip_port)) {
-		broadcast(req, 'DELETE')
-		remove_ip(req.body.ip_port)
-		process_vc[process_ip] += 1 
-		res.status(200).json({
-			'result': 'Success',
-			'msg': "Successfully removed " + req.body.ip_port + " from view"
-		})
+	if (!isProcessBehind(payload)) {
+
 	} else {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': req.body.ip_port + " is not in view"
-		})
+		if (ip_array.includes(req.body.ip_port)) {
+			broadcast(req, 'DELETE')
+			remove_ip(req.body.ip_port)
+			process_vc[process_ip] += 1 
+			res.status(200).json({
+				'result': 'Success',
+				'msg': "Successfully removed " + req.body.ip_port + " from view"
+			})
+		} else {
+			res.status(404).json({
+				'result': 'Error',
+				'msg': req.body.ip_port + " is not in view"
+			})
+		}
 	}
 })
 
@@ -226,20 +235,24 @@ router.get('/:key', (req, res) => {
 
 router.delete('/:key', (req, res) => {
 	let key = req.params.key
-	if (key in hash) {
-		delete hash[key]
-		process_vc[process_ip] += 1 
-		res.status(200).json({
-			'result': 'Success',
-			'msg': 'Key deleted',
-			'payload': process_vc,
-		})
+	if (!isProcessBehind(payload)) {
+
 	} else {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': 'Key does not exist',
-			'payload': process_vc,
-		})
+		if (key in hash) {
+			delete hash[key]
+			process_vc[process_ip] += 1 
+			res.status(200).json({
+				'result': 'Success',
+				'msg': 'Key deleted',
+				'payload': process_vc,
+			})
+		} else {
+			res.status(404).json({
+				'result': 'Error',
+				'msg': 'Key does not exist',
+				'payload': process_vc,
+			})
+		}
 	}
 })
 
