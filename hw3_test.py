@@ -70,6 +70,7 @@ class TestHW3(unittest.TestCase):
 
     def setUp(self):
         self.view = dc.spinUpManyContainers(dockerBuildTag, hostIp, port_prefix, 2)
+        # print(self.view)
 
     def tearDown(self):
         dc.cleanUpDockerContainer()
@@ -77,7 +78,7 @@ class TestHW3(unittest.TestCase):
 
     def getPayload(self, ipPort, key):
         response = checkKey(ipPort, key, {})
-        #print(response)
+        print(response)
         data = response.json()
         return data["payload"]
 
