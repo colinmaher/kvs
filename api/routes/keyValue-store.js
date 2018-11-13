@@ -17,9 +17,15 @@ let system_view = process.env.VIEW
 let ip_array
 
 const jsdom = require('jsdom');
-const { JSDOM } = jsdom;
-const { window } = new JSDOM();
-const { document } = (new JSDOM('')).window;
+const {
+	JSDOM
+} = jsdom;
+const {
+	window
+} = new JSDOM();
+const {
+	document
+} = (new JSDOM('')).window;
 global.document = document;
 
 const $ = require('jquery')(window);
@@ -43,7 +49,7 @@ function broadcast(req, method, data) {
 			// 	return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
 			// }).join('&');
 			let encoded_data = $.param(data)
-			
+
 			let params = {
 				headers: {
 					"content-type": "application/x-www-form-urlencoded"
@@ -71,14 +77,45 @@ function broadcast(req, method, data) {
 	}
 }
 
+function initializeNewNode(urlbase){
+	for(let key in hash){
+		let data = {
+			val: hash[key],
+			payload: key_vc,
+			received: true
+		}
+		let encoded_data = $.param(data)
+		let params = {
+			headers: {
+				"content-type": "application/x-www-form-urlencoded"
+			},
+			body: encoded_data,
+			method: 'PUT'
+		}
+		fetch(urlbase + key, params).then(res => {
+			if (res.ok) {
+				return res.json()
+			} else {
+				return Promise.reject()
+			}
+		})
+		.then(json => {
+			console.log(JSON.stringify(json))
+		})
+		.catch(error => {
+			console.log(error)
+		})
+	}
+}
+
 // View routes
-router.get('/view/', (req, res) => {
+router.get('/view', (req, res) => {
 	res.status(200).json({
-		'view': system_view,
+		'view': ip_array,
 	})
 })
 
-router.put('/view/', (req, res) => {
+router.put('/view', (req, res) => {
 	console.log("VIEW: " + system_view)
 	// ip_array = system_view.split(',')
 	console.log("received: " + req.body.received)
@@ -89,6 +126,12 @@ router.put('/view/', (req, res) => {
 			'result': 'Error',
 			'msg': ip + " is not a valid IP"
 		})
+
+	} else if (ip_array.includes(ip)) {
+		res.status(404).json({
+			'result': 'Error',
+			'msg': ip + " is already in view"
+		})
 	} else if (req.body.received) {
 		system_view = system_view.concat(",", ip)
 		ip_array.push(ip)
@@ -96,11 +139,6 @@ router.put('/view/', (req, res) => {
 		res.status(200).json({
 			'result': 'Success',
 			'msg': "Successfully added " + ip + " to view"
-		})
-	} else if (ip_array.includes(ip)) {
-		res.status(404).json({
-			'result': 'Error',
-			'msg': ip + " is already in view"
 		})
 	} else {
 		system_view = system_view.concat(",", ip)
@@ -113,6 +151,8 @@ router.put('/view/', (req, res) => {
 			ip_port: ip
 		}
 		broadcast(req, 'PUT', data)
+		console.log('initialize url: ' + req.protocol + "://" + ip + '/keyValue-store/')
+		initializeNewNode(req.protocol + "://" + ip + '/keyValue-store/')
 		res.status(200).json({
 			'result': 'Success',
 			'msg': "Successfully added " + ip + " to view"
@@ -121,7 +161,8 @@ router.put('/view/', (req, res) => {
 
 })
 
-router.delete('/view/', (req, res) => {
+router.delete('/view', (req, res) => {
+	let ip = req.body.ip_port
 	if (!ip.match(/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/)) {
 		res.status(404).json({
 			'result': 'Error',
@@ -131,7 +172,7 @@ router.delete('/view/', (req, res) => {
 		removeIp(req.body.ip_port)
 		res.status(200).json({
 			'result': 'Success',
-			'msg': "Successfully added " + req.body.ip_port + " to view"
+			'msg': "Successfully removed " + req.body.ip_port + " to view"
 		})
 	} else if (ip_array.includes(req.body.ip_port)) {
 		let data = {
@@ -159,7 +200,7 @@ function removeIp(ip) {
 }
 
 // Search routes
-router.get('/search/:key', (req, res) => {
+router.get('/keyValue-store/search/:key', (req, res) => {
 	let key = req.params.key
 	console.log(key)
 	console.log(req.body)
@@ -189,16 +230,17 @@ router.get('/search/:key', (req, res) => {
 })
 
 //Basic operation routes
-router.put('/:key', (req, res) => {
+router.put('/keyValue-store/:key', (req, res) => {
+	let key = req.params.key
+	let payload = req.body.payload
+	let value = req.body.val
+
 	console.log(req.body)
 	console.log(req.is())
-	let key = req.params.key
 	console.log("key: " + key)
-	let value = req.body.val
 	console.log(value)
-	// console.log(req.body.payload)
-	let payload = req.body.payload
 	console.log(payload)
+
 	if (!keyCheck(key)) {
 		res.status(404).json({
 			'msg': 'Key not valid',
@@ -261,7 +303,7 @@ router.put('/:key', (req, res) => {
 
 })
 
-router.get('/:key', (req, res) => {
+router.get('/keyValue-store/:key', (req, res) => {
 	let key = req.params.key
 	let payload = req.body.payload
 	// console.log(JSON.stringify(payload))
@@ -315,7 +357,7 @@ function canRead(payload, prop) {
 	}
 }
 
-router.delete('/:key', (req, res) => {
+router.delete('/keyValue-store/:key', (req, res) => {
 	let key = req.params.key
 	let payload = req.body.payload
 	if (key in hash) {

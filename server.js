@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({
 
 //Forwards all routing protocols to keyValue-store.js
 const keyRoutes = require('./api/routes/keyValue-store')
-app.use('/keyValue-store', keyRoutes)
+app.use('/', keyRoutes)
 app.listen(PORT, HOST)
 console.log(`Running on http://${HOST}:${PORT}`)
 

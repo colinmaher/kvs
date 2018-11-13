@@ -60,7 +60,7 @@ def removeNode(ipPort, oldAddress):
     return requests.delete( 'http://%s/view'%str(ipPort), data={'ip_port':oldAddress} )
 
 def viewNetwork(ipPort):
-    #print('GET: http://%s/view'%str(ipPort))
+    print('GET: http://%s/view'%str(ipPort))
     return requests.get( 'http://%s/view'%str(ipPort) )
 
 ###########################################################################################
@@ -137,7 +137,7 @@ class TestHW3(unittest.TestCase):
 
     def confirmViewNetwork(self, ipPort, expectedStatus, expectedView):
         response = viewNetwork(ipPort)
-        #print(response)
+        print(response)
         self.assertEqual(response.status_code, expectedStatus)
 
         data = response.json()
@@ -449,7 +449,7 @@ class TestHW3(unittest.TestCase):
                             expectedIsExists=True,
                             payload=payload)
 
-        payload = self.confirmGetKey(ipPort=self.newIpPort, 
+        payload = self.confirmGetKey(ipPort=newIpPort, 
                            key=key, 
                            expectedStatus=200, 
                            expectedResult="Success", 
