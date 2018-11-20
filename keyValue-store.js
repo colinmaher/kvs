@@ -1,7 +1,7 @@
 /*
  * CMPS 128 Fall 2018
  * Homework 3 - Causally and Eventually Consistent Key Value Store 
- * Team: Colin Maher, Daniel Zheng
+ * Team: Colin Maher
  */
 
 'use strict';
@@ -45,9 +45,6 @@ function broadcast(req, method, data) {
 		if (ip_array[index] != process_ip) {
 			//prep data for broadcast
 			console.log(data)
-			// const searchParams = Object.keys(data).map((key) => {
-			// 	return encodeURIComponent(key) + '=' + encodeURIComponent(data[key]);
-			// }).join('&');
 			let encoded_data = $.param(data)
 
 			let params = {

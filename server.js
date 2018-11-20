@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({
 })) // for parsing application/x-www-form-urlencoded
 
 //Forwards all routing protocols to keyValue-store.js
-const keyRoutes = require('./api/routes/keyValue-store')
+const keyRoutes = require('./keyValue-store')
 app.use('/', keyRoutes)
 app.listen(PORT, HOST)
 console.log(`Running on http://${HOST}:${PORT}`)
