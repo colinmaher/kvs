@@ -1,6 +1,6 @@
 /*
  * CMPS 128 Fall 2018
- * Homework 3 - Causally and Eventually Consistent Key Value Store 
+ * Homework 4 - Causally and Eventually Consistent Key Value Store with Sharding 
  * Team: Colin Maher
  */
 
@@ -9,12 +9,17 @@
 const express = require('express')
 const router = express.Router()
 const fetch = require('isomorphic-fetch')
+const request = require('request')
 
 const hash = {}
 const key_vc = {}
 const process_ip = process.env.IP_PORT
 let system_view = process.env.VIEW
-let ip_array
+const num_shards = process.env.S
+let ip_array = []
+const shard_ids = {}
+let my_shard_id
+
 
 const jsdom = require('jsdom');
 const {
@@ -30,19 +35,61 @@ global.document = document;
 
 const $ = require('jquery')(window);
 
+function hashString(ip) {
+	const sum = 0
+	for (let i = 0; i < ip.size(); i++) {
+		sum += ip.charCodeAt(i)
+	}
+	return sum % num_shards
+}
+
+function generateShardIds() {
+	const ids = []
+	for (let key in shard_ids) {
+		ids.push(key)
+	}
+	return ids.join(',')
+}
+
+function initShards() {
+	for (let i = 0; i < num_shards; i++) {
+		shard_ids[i] = []
+	}
+	shardIps()
+}
+
+function shardIps() {
+	for (let i = 0; i < ip_arrays.size(); i++) {
+		shard_ids[hashString(ip_array[i])].push(ip_array[i])
+	}
+}
+
+function checkValidShard() {
+	for (let key in shard_ids) {
+		if (shard_ids[key].size() == 1) {
+			return false
+		}
+	}
+	return true
+}
+
+ip_array = system_view.split(',')
+initShards()
+my_shard_id = hashString(process_ip)
+
 router.use(function (req, res, next) {
 	console.log('Request URL:', req.protocol + "://" + req.get('host') + req.originalUrl)
 	console.log("My IP: " + process_ip)
 	console.log("VIEW: " + system_view)
-	ip_array = system_view.split(',')
+	// shard_id = ip_array.size() % num_shards
 	next()
-});
+})
 
 
 
-function broadcast(req, method, data) {
-	for (let index in ip_array) {
-		if (ip_array[index] != process_ip) {
+function broadcast(req, method, data, receivers) {
+	for (let index in receivers) {
+		if (receivers[index] != process_ip) {
 			//prep data for broadcast
 			console.log(data)
 			let encoded_data = $.param(data)
@@ -54,9 +101,9 @@ function broadcast(req, method, data) {
 				body: encoded_data,
 				method: method
 			}
-			console.log(ip_array[index])
-			console.log("request: " + req.protocol + "://" + ip_array[index] + req.originalUrl)
-			fetch(req.protocol + "://" + ip_array[index] + req.originalUrl, params)
+			console.log(receivers[index])
+			console.log("request: " + req.protocol + "://" + receivers[index] + req.originalUrl)
+			fetch(req.protocol + "://" + receivers[index] + req.originalUrl, params)
 				.then(res => {
 					if (res.ok) {
 						return res.json()
@@ -74,8 +121,123 @@ function broadcast(req, method, data) {
 	}
 }
 
-function initializeNewNode(urlbase){
-	for(let key in hash){
+// sharding routes
+router.get('/shard/my_id', (req, res) => {
+	res.status(200).json({
+		'id': my_shard_id,
+	})
+})
+
+router.get('/shard/all_ids', (req, res) => {
+	res.status(200).json({
+		'result': 'Success',
+		'shard_ids': generateShardIds(),
+	})
+})
+
+router.get('/shard/members/:id', (req, res) => {
+	const id = req.params.id
+	if (shard_ids.hasOwnProperty(id)) {
+		res.status(200).json({
+			'result': 'Success',
+			'members': shard_ids[id].join(','),
+		})
+	} else {
+		res.status(404).json({
+			'result': 'Error',
+			'msg': 'No shard with id ' + id
+		})
+	}
+})
+
+router.get('/shard/count/:id', (req, res) => {
+	const id = req.params.id
+	if (shard_ids.hasOwnProperty(id)) {
+		res.status(200).json({
+			'result': 'Success',
+			'Count': shard_ids[id].size(),
+		})
+	} else {
+		res.status(404).json({
+			'result': 'Error',
+			'msg': 'No shard with id ' + id,
+		})
+	}
+})
+
+router.put('/shard/changeShardNumber', (req, res) => {
+	const new_shard_num = req.body.num
+	if (!checkValidShard()) {
+		res.status(400).json({
+			'result': 'Error',
+			'msg': 'Not enough nodes. ' + new_shard_num + ' shards result in a non-fault tolerant shard',
+		})
+	} else if (new_shard_num > ip_array.size()) {
+		res.status(400).json({
+			'result': 'Error',
+			'msg': 'Not enough nodes for number of shards',
+		})
+	} else {
+		if (!req.body.received) {
+			let data = {
+				received: true,
+				num: req.body.num,
+			}
+			broadcast(req, 'PUT', data, ip_array)
+		}
+		num_shards = new_shard_num
+		shardIps()
+		res.status(200).json({
+			'result': 'Success',
+			'shard_ids': generateShardIds()
+		})
+	}
+	// need to rebalance nodes among shards here
+	rebalanceData(req.protocol + "://")
+})
+
+function rebalanceData(url_base) {
+	for (let key in hash) {
+		// everyone sends their data to where it belongs
+		const key_hash = hashString(key)
+		const encoded_data = $.param({
+			val: hash[key],
+			payload: key_vc
+		})
+		const params = {
+			headers: {
+				"content-type": "application/x-www-form-urlencoded"
+			},
+			body: encoded_data,
+			method: 'PUT'
+		}
+		shard_ids[key_hash].forEach((ip) => {
+			fetch(url_base + ip + "/keyValue-store/" + key, params)
+				.then(res => {
+					if (res.ok) {
+						return res.json()
+					} else {
+						return Promise.reject()
+					}
+				})
+				.then(json => {
+					console.log(JSON.stringify(json))
+				})
+				.catch(error => {
+					console.log(error)
+				})
+		})
+
+		// everyone removes data that does not hash to their shard id
+		if (key_hash !== my_shard_id) {
+			delete hash[key]
+			delete key_vc[key]
+		}
+	}
+}
+
+function initializeNewNode(urlbase) {
+	for (let key in hash) {
 		let data = {
 			val: hash[key],
 			payload: key_vc,
@@ -90,18 +252,18 @@ function initializeNewNode(urlbase){
 			method: 'PUT'
 		}
 		fetch(urlbase + key, params).then(res => {
-			if (res.ok) {
-				return res.json()
-			} else {
-				return Promise.reject()
-			}
-		})
-		.then(json => {
-			console.log(JSON.stringify(json))
-		})
-		.catch(error => {
-			console.log(error)
-		})
+				if (res.ok) {
+					return res.json()
+				} else {
+					return Promise.reject()
+				}
+			})
+			.then(json => {
+				console.log(JSON.stringify(json))
+			})
+			.catch(error => {
+				console.log(error)
+			})
 	}
 }
 
@@ -132,6 +294,7 @@ router.put('/view', (req, res) => {
 	} else if (req.body.received) {
 		system_view = system_view.concat(",", ip)
 		ip_array.push(ip)
+		shard_ids[ip] = hashString(ip)
 		console.log("added " + ip + " to view")
 		res.status(200).json({
 			'result': 'Success',
@@ -140,6 +303,7 @@ router.put('/view', (req, res) => {
 	} else {
 		system_view = system_view.concat(",", ip)
 		ip_array.push(ip)
+		shard_ids[ip] = hashString(ip)
 		console.log(system_view)
 		console.log(system_view.split(','))
 		console.log(ip_array)
@@ -147,7 +311,7 @@ router.put('/view', (req, res) => {
 			received: true,
 			ip_port: ip
 		}
-		broadcast(req, 'PUT', data)
+		broadcast(req, 'PUT', data, ip_array)
 		console.log('initialize url: ' + req.protocol + "://" + ip + '/keyValue-store/')
 		initializeNewNode(req.protocol + "://" + ip + '/keyValue-store/')
 		res.status(200).json({
@@ -160,23 +324,22 @@ router.put('/view', (req, res) => {
 
 router.delete('/view', (req, res) => {
 	let ip = req.body.ip_port
+
+	//need to rebalance nodes among shards here
+
 	if (!ip.match(/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/)) {
 		res.status(404).json({
 			'result': 'Error',
 			'msg': ip + " is not a valid IP"
 		})
-	} else if (req.body.received) {
-		removeIp(req.body.ip_port)
-		res.status(200).json({
-			'result': 'Success',
-			'msg': "Successfully removed " + req.body.ip_port + " to view"
-		})
 	} else if (ip_array.includes(req.body.ip_port)) {
-		let data = {
-			received: true,
-			ip_port: req.body.ip_port
+		if (!req.body.received) {
+			let data = {
+				received: true,
+				ip_port: req.body.ip_port
+			}
+			broadcast(req, 'DELETE', data, ip_array)
 		}
-		broadcast(req, 'DELETE', data)
 		removeIp(req.body.ip_port)
 		res.status(200).json({
 			'result': 'Success',
@@ -192,6 +355,8 @@ router.delete('/view', (req, res) => {
 })
 
 function removeIp(ip) {
+	// remove ip from shard_ids
+	shard_ids[hashString(ip)].filter(current_ip => current_ip !== ip)
 	ip_array = ip_array.filter(current_ip => current_ip !== ip);
 	system_view = ip_array.join(',')
 }
@@ -228,9 +393,10 @@ router.get('/keyValue-store/search/:key', (req, res) => {
 
 //Basic operation routes
 router.put('/keyValue-store/:key', (req, res) => {
-	let key = req.params.key
-	let payload = req.body.payload
-	let value = req.body.val
+	const key = req.params.key
+	const payload = req.body.payload
+	const value = req.body.val
+	const key_hash = hashString(key)
 
 	console.log(req.body)
 	console.log(req.is())
@@ -256,48 +422,61 @@ router.put('/keyValue-store/:key', (req, res) => {
 			'error': 'Value is missing',
 			'payload': payload,
 		})
-	} else if (key in hash) {
-		key_vc[key].value += 1
-		key_vc[key].timestamp = Date.now()
-		if (!req.body.received) {
+	} else if (key_hash === my_shard_id) { // if key belongs with me
+		if (!req.body.received) { // if not already broadcasted 
+			if (key in hash) { // increment vector clock
+				key_vc[key].value += 1
+				key_vc[key].timestamp = Date.now()
+				res.status(201).json({
+					'replaced': true,
+					'msg': 'Updated successfully',
+					'payload': key_vc,
+				})
+			} else {
+				key_vc[key] = { // init vector clock for that key
+					value: 1,
+					timestamp: Date.now()
+				}
+				res.status(200).json({
+					'replaced': false,
+					'msg': 'Added successfully',
+					'payload': key_vc,
+				})
+			}
+			hash[key] = value;
 			let data = {
 				val: value,
 				payload: key_vc,
 				received: true
 			}
-			broadcast(req, 'PUT', data)
-		}
-		hash[key] = value;
-		res.status(201).json({
-			'replaced': true,
-			'msg': 'Updated successfully',
-			'payload': key_vc,
-		})
-	} else {
-		//if first write
-		if (!req.body.received) {
-			key_vc[key] = {
-				value: 1,
-				timestamp: Date.now()
+			broadcast(req, 'PUT', data, shard_ids[key_hash]) // send to nodes that share same shard id
+		} else {
+			key_vc[key] = payload[key] // if data has already been broadcasted then keep the timestamp of first write
+			if (key in hash) {
+				res.status(201).json({
+					'replaced': true,
+					'msg': 'Updated successfully',
+					'payload': key_vc,
+				})
+			} else {
+				res.status(200).json({
+					'replaced': false,
+					'msg': 'Added successfully',
+					'payload': key_vc,
+				})
 			}
-			let data = {
-				val: value,
-				payload: key_vc,
-				received: true
-			}
-			broadcast(req, 'PUT', data)
-
-		} else { //keep timestamp of first write
-			key_vc[key] = payload[key]
+			hash[key] = value;
 		}
-		hash[key] = value;
-		res.status(200).json({
-			'replaced': false,
-			'msg': 'Added successfully',
-			'payload': key_vc,
-		})
+	} else { // if key doesn't belong to me send it to nodes its belongs to
+		// check if key exists on nodes that share its hash
+		const randIndex = Math.floor(Math.random() * shard_ids[key_hash].length)
+		const r = request.put({
+			uri: req.protocol + shard_ids[key_hash][randIndex] + "/keyValue-store/" + key,
+			json: req.body
+		});
+		console.log(req.pipe(r).pipe(res))
+		return req.pipe(r).pipe(res)
 	}
-
 })
 
 router.get('/keyValue-store/:key', (req, res) => {
