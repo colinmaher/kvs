@@ -15,9 +15,9 @@ const hash = {}
 const key_vc = {}
 const process_ip = process.env.IP_PORT
 let system_view = process.env.VIEW
-const num_shards = process.env.S
+let num_shards = process.env.S
 let ip_array = []
-const shard_ids = {}
+let shard_ids = {}
 let my_shard_id
 
 
@@ -36,11 +36,12 @@ global.document = document;
 const $ = require('jquery')(window);
 
 function hashString(ip) {
-	const sum = 0
-	for (let i = 0; i < ip.size(); i++) {
+	let sum = 0
+	for (let i = 0; i < ip.length; i++) {
 		sum += ip.charCodeAt(i)
 	}
-	return sum % num_shards
+	// console.log("sum: " + sum + " num shards: " + parseInt(num_shards))
+	return sum % parseInt(num_shards)
 }
 
 function generateShardIds() {
@@ -52,6 +53,8 @@ function generateShardIds() {
 }
 
 function initShards() {
+	my_shard_id = hashString(process_ip)
+	shard_ids = {}
 	for (let i = 0; i < num_shards; i++) {
 		shard_ids[i] = []
 	}
@@ -59,23 +62,20 @@ function initShards() {
 }
 
 function shardIps() {
-	for (let i = 0; i < ip_arrays.size(); i++) {
-		shard_ids[hashString(ip_array[i])].push(ip_array[i])
-	}
-}
-
-function checkValidShard() {
-	for (let key in shard_ids) {
-		if (shard_ids[key].size() == 1) {
-			return false
+	for (let i = 0; i < ip_array.length; i++) {
+		// console.log(hashString(ip_array[i]))
+		const ip_hash = hashString(ip_array[i])
+		if(shard_ids[ip_hash]){
+			shard_ids[ip_hash].push(ip_array[i])
+		}else{
+			shard_ids[ip_hash] = [].push(ip_array[i])
 		}
 	}
-	return true
 }
 
 ip_array = system_view.split(',')
 initShards()
-my_shard_id = hashString(process_ip)
+console.log("shard id: " + my_shard_id)
 
 router.use(function (req, res, next) {
 	console.log('Request URL:', req.protocol + "://" + req.get('host') + req.originalUrl)
@@ -84,8 +84,6 @@ router.use(function (req, res, next) {
 	// shard_id = ip_array.size() % num_shards
 	next()
 })
-
-
 
 function broadcast(req, method, data, receivers) {
 	for (let index in receivers) {
@@ -155,7 +153,7 @@ router.get('/shard/count/:id', (req, res) => {
 	if (shard_ids.hasOwnProperty(id)) {
 		res.status(200).json({
 			'result': 'Success',
-			'Count': shard_ids[id].size(),
+			'Count': shard_ids[id].length,
 		})
 	} else {
 		res.status(404).json({
@@ -165,14 +163,31 @@ router.get('/shard/count/:id', (req, res) => {
 	}
 })
 
+function checkValidShard(num) {
+	const mod_count = {}
+	for (let i = 0; i < num; i++) {
+		mod_count[i] = 0
+	}
+	for (let i = 0; i < ip_array.length; i++) {
+		mod_count[i % num]++
+		// console.log(mod_count[i % num])
+	}
+	for (let i = 0; i < num; i++) {
+		if (mod_count[i] <= 1) { // not fault tolerant with fewer one or fewer nodes in a shard
+			return false
+		}
+	}
+	return true
+}
+
 router.put('/shard/changeShardNumber', (req, res) => {
 	const new_shard_num = req.body.num
-	if (!checkValidShard()) {
+	if (!checkValidShard(new_shard_num)) {
 		res.status(400).json({
 			'result': 'Error',
-			'msg': 'Not enough nodes. ' + new_shard_num + ' shards result in a non-fault tolerant shard',
+			'msg': 'Not enough nodes. ' + new_shard_num + ' shards results in a non-fault tolerant shard',
 		})
-	} else if (new_shard_num > ip_array.size()) {
+	} else if (new_shard_num > ip_array.length){
 		res.status(400).json({
 			'result': 'Error',
 			'msg': 'Not enough nodes for number of shards',
@@ -186,7 +201,7 @@ router.put('/shard/changeShardNumber', (req, res) => {
 			broadcast(req, 'PUT', data, ip_array)
 		}
 		num_shards = new_shard_num
-		shardIps()
+		initShards()
 		res.status(200).json({
 			'result': 'Success',
 			'shard_ids': generateShardIds()
@@ -402,7 +417,7 @@ router.put('/keyValue-store/:key', (req, res) => {
 	console.log(req.is())
 	console.log("key: " + key)
 	console.log(value)
-	console.log(payload)
+	console.log(JSON.stringify(payload))
 
 	if (!keyCheck(key)) {
 		res.status(404).json({
@@ -471,11 +486,14 @@ router.put('/keyValue-store/:key', (req, res) => {
 		// check if key exists on nodes that share its hash
 		const randIndex = Math.floor(Math.random() * shard_ids[key_hash].length)
 		const r = request.put({
-			uri: req.protocol + shard_ids[key_hash][randIndex] + "/keyValue-store/" + key,
-			json: req.body
-		});
-		console.log(req.pipe(r).pipe(res))
-		return req.pipe(r).pipe(res)
+			url: req.protocol + "://" + shard_ids[key_hash][randIndex] + "/keyValue-store/" + key,
+			json: $.param(req.body)
+		}, function(err,httpResponse,body){
+			if(err){
+				console.log("Connection Refused")
+			}
+			req.pipe(r).pipe(res)
+		})		
 	}
 })
 
