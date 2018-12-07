@@ -5,7 +5,7 @@ import time
 import unittest
 import json
 
-import docker_control
+import docker_control_new
 
 import io
 
@@ -28,7 +28,7 @@ propogationTime = 3 #sets number of seconds we sleep after certain actions to le
 # you may lower this to speed up your testing if you know that your system is fast enough to propigate information faster than this
 # I do not recomend increasing this
 
-dc = docker_control.docker_controller(networkName, needSudo)
+dc = docker_control_new.docker_controller(networkName, needSudo)
 
 def getViewString(view):
     listOStrings = []
@@ -260,7 +260,14 @@ class TestHW4(unittest.TestCase):
     def checkConsistentMembership(self, ipPort, ID):
         shard = self.checkGetMembers(ipPort, ID)
         for member in shard:
-            self.assertEqual(self.checkGetMyShardId(member), ID)
+            # self.assertEqual(self.checkGetMyShardId(member), ID)
+            ind = 0
+            for container in self.view:
+                if container["networkIpPortAddress"] == member:
+                    ind = container
+
+            ip = ind["testScriptAddress"]
+            self.assertEqual(self.checkGetMyShardId(ip), ID)
 
 ##########################################################################
 ## Tests start here ##
@@ -290,7 +297,7 @@ class TestHW4(unittest.TestCase):
         ipPort = self.view[0]["testScriptAddress"]
 
         shardView = self.getShardView(ipPort)
-        for shard in shardView:
+        for shard in shardView.items():
             length = len(shard)
             self.assertTrue(length > 1)
 

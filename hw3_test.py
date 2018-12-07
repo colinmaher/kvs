@@ -5,7 +5,7 @@ import time
 import unittest
 import json
 
-import docker_control
+import docker_control_old
 
 dockerBuildTag = "testing" #put the tag for your docker build here
 
@@ -22,7 +22,7 @@ propogationTime = 3 #sets number of seconds we sleep after certain actions to le
 # you may lower this to speed up your testing if you know that your system is fast enough to propigate information faster than this
 # I do not recomend increasing this
 
-dc = docker_control.docker_controller(needSudo)
+dc = docker_control_old.docker_controller(needSudo)
 
 def getViewString(view):
     listOStrings = []
