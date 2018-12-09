@@ -20,7 +20,7 @@ let ip_array = []
 let shard_ids = {}
 let my_shard_id
 
-
+//needed for $.param function
 const jsdom = require('jsdom');
 const {
 	JSDOM
@@ -53,7 +53,7 @@ function generateShardIds() {
 }
 
 function initShards() {
-	console.log("initShards called")
+	// console.log("initShards called")
 	my_shard_id = hashString(process_ip, num_shards)
 	shard_ids = {}
 	for (let i = 0; i < num_shards; i++) {
@@ -183,6 +183,8 @@ function checkValidShard(num) {
 
 router.put('/shard/changeShardNumber', (req, res) => {
 	const new_num_shards = req.body.num
+	console.log("in changeShardNumber")
+	console.log(req.body.payload)
 	if (!checkValidShard(new_num_shards)) {
 		res.status(400).json({
 			'result': 'Error',
@@ -204,6 +206,8 @@ router.put('/shard/changeShardNumber', (req, res) => {
 		num_shards = new_num_shards
 		console.log("new num shards: " + num_shards)
 		initShards()
+		// console.log(req.body.payload)
+
 		rebalanceData(req.protocol + "://", req.body.payload)
 		res.status(200).json({
 			'result': 'Success',
@@ -216,6 +220,7 @@ function rebalanceData(url_base, payload) {
 	for (let key in hash) { // sends each key value to where it belongs
 		const key_hash = hashString(key, num_shards)
 		console.log(key_hash)
+		console.log(payload)
 		const encoded_data = $.param({
 			val: hash[key],
 			payload: payload,
@@ -228,7 +233,7 @@ function rebalanceData(url_base, payload) {
 			body: encoded_data,
 			method: 'PUT'
 		}
-		shard_ids[key_hash].forEach((ip) => {
+		shard_ids[key_hash].filter((ip) => ip !== process_ip).forEach((ip) => {
 			fetch(url_base + ip + "/keyValue-store/" + key, params)
 				.then(res => {
 					if (res.ok) {
@@ -317,11 +322,10 @@ router.put('/view', (req, res) => {
 		if (req.body.received) { // if already broadcasted don't rebroadcast
 			ip_array.push(ip)
 			system_view = system_view.concat(",", ip)
-			// res.status(200).json({
-			// 	'result': 'Success',
-			// 	'msg': "Successfully added " + ip + " to view"
-			// })
-			res.end()
+			res.status(200).json({
+				'result': 'Success',
+				'msg': "Successfully added " + ip + " to view"
+			})
 		} else { // otherise we initialize this node with self and broadcast to all others
 			initializeNewNode(req.protocol + "://")
 			let data = {
@@ -350,7 +354,7 @@ router.put('/view', (req, res) => {
 //need to decrease number of shards if a node is removed and a shard only contains 1 node
 router.delete('/view', (req, res) => {
 	let ip = req.body.ip_port
-	const ip_hash = hashString(ip, num_shards)
+	// const ip_hash = hashString(ip, num_shards)
 	//need to rebalance nodes among shards here
 	if (!ip.match(/^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]):[0-9]+$/)) {
 		res.status(404).json({
@@ -370,6 +374,7 @@ router.delete('/view', (req, res) => {
 					console.log("rebalancing not enough nodes in shard " + hashString(ip, num_shards))
 					const new_num_shards = num_shards - 1
 					req.body.num = new_num_shards
+					req.body.received = false
 					request.put({
 						url: req.protocol + "://" + process_ip + "/shard/changeShardNumber",
 						form: req.body
@@ -380,12 +385,13 @@ router.delete('/view', (req, res) => {
 				}
 			}
 		}
-		if (ip === process_ip) {
-			rebalanceData(req.protocol + "://", payload)
-		}
+		// if (ip === process_ip) {
+		// 	console.log("rebalancing deleted node data")
+		// 	rebalanceData(req.protocol + "://", req.body.payload)
+		// }
 		res.status(200).json({
 			'result': 'Success',
-			'msg': "Successfully removed " + ip + " from view"
+			'msg': "Successfully removed " + ip + " from view",
 		})
 	} else {
 		res.status(404).json({
@@ -473,6 +479,8 @@ router.put('/keyValue-store/:key', (req, res) => {
 	console.log("hash of key: " + key_hash)
 
 	payload = postmanDecodeString(payload)
+	console.log('postman payload: ')
+	console.log(payload)
 	if (!keyCheck(key)) {
 		res.status(404).json({
 			'msg': 'Key not valid',
@@ -560,7 +568,7 @@ router.get('/keyValue-store/:key', (req, res) => {
 		if (!canRead(payload, key)) {
 			res.status(404).json({
 				'result': 'Error',
-				'msg': 'Cannot read',
+				'msg': 'Unable to serve request and maintain causal consistency',
 				'payload': payload,
 			})
 		}
@@ -589,7 +597,6 @@ router.get('/keyValue-store/:key', (req, res) => {
 })
 
 function canRead(payload, prop) { // determine if causal history aligns
-	console.log("my value: " + key_vc[prop])
 	if (payload.hasOwnProperty(prop) && key_vc.hasOwnProperty(prop)) {
 		console.log("incoming value: " + payload[prop].value)
 		console.log("my value: " + key_vc[prop].value)
@@ -610,7 +617,7 @@ function canRead(payload, prop) { // determine if causal history aligns
 			}
 		}
 	} else if (payload.hasOwnProperty(prop) && !key_vc.hasOwnProperty(prop)) {
-		console.log("I dont have that key")
+		// console.log("I dont have that key")
 		return false
 	} else {
 		return true
@@ -636,7 +643,7 @@ router.delete('/keyValue-store/:key', (req, res) => {
 			res.status(200).json({
 				'result': 'Success',
 				'msg': 'Key deleted',
-				'payload': key_vc,
+				'payload': payload,
 			})
 		} else {
 			res.status(404).json({
