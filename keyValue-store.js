@@ -90,6 +90,7 @@ function broadcast(req, method, data, receivers) {
 	for (let index in receivers) {
 		if (receivers[index] != process_ip) {
 			//prep data for broadcast
+			console.log("broadcast data:")
 			console.log(data)
 			let encoded_data = $.param(data)
 
@@ -461,6 +462,9 @@ function postmanDecodeString(payload) {
 			// console.log(payload)
 		}
 	}
+	if (payload === undefined) {
+		return {}
+	}
 	return payload
 }
 
@@ -563,10 +567,11 @@ router.get('/keyValue-store/:key', (req, res) => {
 	const key_hash = hashString(key, num_shards)
 	console.log(payload)
 	payload = postmanDecodeString(payload)
-	// console.log(payload)
+	console.log("postman payload:")
+	console.log(payload)
 	if (key_hash === my_shard_id) {
 		if (!canRead(payload, key)) {
-			res.status(404).json({
+			res.status(400).json({
 				'result': 'Error',
 				'msg': 'Unable to serve request and maintain causal consistency',
 				'payload': payload,
@@ -611,6 +616,7 @@ function canRead(payload, prop) { // determine if causal history aligns
 		} else {
 			//check timestamp
 			if (payload[prop].timestamp > key_vc[prop].timestamp) {
+				console.log("can't read")
 				return false
 			} else {
 				return true
