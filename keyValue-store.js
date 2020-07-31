@@ -1,9 +1,11 @@
 /*
- * CMPS 128 Fall 2018
- * Homework 4 - Causally and Eventually Consistent Key Value Store with Sharding 
- * Team: Colin Maher
- */
-
+	Main source file for the system. This file initializes the system and contains all the routes for reads, writes and system view changes.
+	The system maintains a number of shards to distribute data to efficiently while maintaining redundancy. As nodes in the system fail, shard data 
+	is rebalanced to maintain availability and redundancy/partition tolerance guarantees. When these nodes recover they reload their data by 
+	reaching out to the other nodes in its shard. The system also guarantees eventual consistency by maintaining a vector clock and timestamp of 
+	each key in the system, while clients of the system maintain their own set of vector clocks and timestamps for the keys that they have seen. 
+	These vector clocks and timestamps are compared on every read to ensure that the client never reads old data. 
+*/
 'use strict';
 
 const express = require('express')
